@@ -42,15 +42,16 @@ function LA.UpdateAssignmentFrame(Warlock, AssignmentFrame)
 	UIDropDownMenu_SetText(LA.GetValueFromDropDownList(AssignmentFrame.BanishAssignmentMenu, LA.BanishMarkers, ""), AssignmentFrame.BanishAssignmentMenu)
 
 	--Set the SS Assignment
-	LA.UpdateSoulstoneDropDownMenuWithNewOptions(AssignmentFrame.SSAssignmentMenu, LA.GetSSTargets(), "SSAssignments");
-	UIDropDownMenu_SetSelectedID(AssignmentFrame.SSAssignmentMenu, LA.GetSSIndexFromTable(LA.GetSSTargets(), Warlock.SSAssignment))
+	LA.UpdateSoulstoneDropDownMenuWithNewOptions(AssignmentFrame.SSAssignmentMenu, LA.GetSSTargets());
+	-- UIDropDownMenu_SetSelectedID(AssignmentFrame.SSAssignmentMenu, LA.GetSSIndexFromTable(LA.GetSSTargets(), Warlock.SSAssignment))
 	
-	local selecedSSTarget = UIDropDownMenu_GetSelectedID(AssignmentFrame.SSAssignmentMenu)
+	local selecedSSTarget = LA.GetSSValueFromDropDownList(AssignmentFrame.SSAssignmentMenu)
 	if selecedSSTarget ~= nil then
-		local ssAssignment = LA.GetSSTargets()[selecedSSTarget]
-		UIDropDownMenu_SetText("|c" .. ssAssignment.Color .. ssAssignment.Name, AssignmentFrame.SSAssignmentMenu)
+		UIDropDownMenu_SetText(selecedSSTarget.ColoredName, AssignmentFrame.SSAssignmentMenu)
+		-- local ssAssignment = LA.GetSSTargets()[selecedSSTarget]
+		-- UIDropDownMenu_SetText("|c" .. ssAssignment.Color .. ssAssignment.Name, AssignmentFrame.SSAssignmentMenu)
 	else
-		UIDropDownMenu_SetText(LA.GetValueFromDropDownList(AssignmentFrame.SSAssignmentMenu, LA.GetSSTargets(), "SSAssignments"), AssignmentFrame.SSAssignmentMenu)
+		UIDropDownMenu_SetText("None", AssignmentFrame.SSAssignmentMenu)
 	end
 
 	--Update the Portrait picture	
@@ -369,7 +370,8 @@ function LA.GetWarlockFromAssignmentFrame(WarlockName)
     local Warlock = LA.CreateWarlock(AssignmentFrame.WarlockName,
 	LA.GetCurseValueFromDropDownList(AssignmentFrame.CurseAssignmentMenu),
 	LA.GetValueFromDropDownList(AssignmentFrame.BanishAssignmentMenu, LA.BanishMarkers, ""))
-    Warlock.SSAssignment = LA.GetValueFromDropDownList(AssignmentFrame.SSAssignmentMenu, LA.GetSSTargets(), "SSAssignments")
+	LA.print("SS ass = " .. LA.GetSSValueFromDropDownList(AssignmentFrame.SSAssignmentMenu).ColoredName)
+    Warlock.SSAssignment = LA.GetSSValueFromDropDownList(AssignmentFrame.SSAssignmentMenu).Name
     Warlock.AssignmentFrameLocation = AssignmentFrame.LockFrameID
     return Warlock   
 end

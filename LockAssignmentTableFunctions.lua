@@ -147,4 +147,15 @@ do
 		end
 		return getN
 	end
+
+	function LA.printTable(t)
+		for key, value in pairs(t) do
+			if type(value) == "table" then
+				LA.print(key .. ":")
+				LA.PrintTable(value)  -- Recursively print nested tables
+			else
+				LA.print(key .. ": " .. tostring(value))
+			end
+		end
+	end
 end
