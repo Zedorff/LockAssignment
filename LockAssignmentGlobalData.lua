@@ -2,7 +2,7 @@
 LA = {};
 LA.RaidMode = true;
 LA.DebugMode = false;
-LA.Version = 14
+LA.Version = 15
 LA.UpdateFrame = CreateFrame("Frame", nil, UIParent)
 LA.LockAssignmentWarlockFrameWidth = 500;
 LA.LockAssignmentWarlockFrameHeight = 128
@@ -20,6 +20,9 @@ end
 LA.LockAssignmentAssignCheckFrame={}
 LA.IsMyAddonOutOfDate=false;
 LA.MacroName = "CurseAssignment";
+LA.EmptySSTarget = { 
+	Name = "None"
+}
 
 
 function  LA.CreateWarlock(name, curse, banish, raidIndex)
@@ -27,7 +30,7 @@ function  LA.CreateWarlock(name, curse, banish, raidIndex)
 	Warlock.Name = name
 	Warlock.CurseAssignment = curse
 	Warlock.BanishAssignment = banish
-	Warlock.SSAssignment = "None"
+	Warlock.SSAssignment = LA.EmptySSTarget
 	Warlock.SSCooldown=nil
 	Warlock.AcceptedAssignments = "nil"
 	Warlock.AssignmentFrameLocation = ""
@@ -91,7 +94,7 @@ function LA.IsMyDataDirty(AssignmentData)
 	local myData = LA.GetMyData();
 	if myData.CurseAssignment ~= AssignmentData.CurseAssignment or
 		myData.BanishAssignment ~= AssignmentData.BanishAssignment or
-		myData.SSAssignment ~= AssignmentData.SSAssignment then
+		myData.SSAssignment.Name ~= AssignmentData.SSAssignment.Name then
 			return true;
 	end
 
@@ -213,6 +216,14 @@ end
 
 function FirstToUpper(str)
     return (string.gsub(str, "^%l", string.upper))
+end
+
+function LA.GetColoredName(player)
+	if player.Color ~= nil then
+		return "|c" .. player.Color .. player.Name .. "|r"
+	else
+		return player.Name
+	end
 end
 
 function LA.GetSSTargetsFromRaid()
