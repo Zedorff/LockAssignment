@@ -28,6 +28,8 @@ function LA.UpdateAssignmentFrame(Warlock, AssignmentFrame)
 	else
 		AssignmentFrame:Show()
 	end
+
+	CloseDropDownMenus()
 	--Set the nametag
     AssignmentFrame.WarlockName = Warlock.Name
 	AssignmentFrame.NamePlate.TextFrame:SetText(Warlock.Name)
@@ -42,15 +44,13 @@ function LA.UpdateAssignmentFrame(Warlock, AssignmentFrame)
 	UIDropDownMenu_SetText(LA.GetValueFromDropDownList(AssignmentFrame.BanishAssignmentMenu, LA.BanishMarkers, ""), AssignmentFrame.BanishAssignmentMenu)
 
 	--Set the SS Assignment
-	LA.UpdateSoulstoneDropDownMenuWithNewOptions(AssignmentFrame.SSAssignmentMenu, LA.GetSSTargets(), "SSAssignments");
-	UIDropDownMenu_SetSelectedID(AssignmentFrame.SSAssignmentMenu, LA.GetSSIndexFromTable(LA.GetSSTargets(), Warlock.SSAssignment))
-	
-	local selecedSSTarget = UIDropDownMenu_GetSelectedID(AssignmentFrame.SSAssignmentMenu)
+	LA.UpdateSoulstoneDropDownMenuWithNewOptions(AssignmentFrame.SSAssignmentMenu, LA.GetSSTargets(), Warlock);
+
+	local selecedSSTarget = LA.GetSSValueFromDropDownList(AssignmentFrame.SSAssignmentMenu)
 	if selecedSSTarget ~= nil then
-		local ssAssignment = LA.GetSSTargets()[selecedSSTarget]
-		UIDropDownMenu_SetText("|c" .. ssAssignment.Color .. ssAssignment.Name, AssignmentFrame.SSAssignmentMenu)
+		UIDropDownMenu_SetText(LA.GetColoredName(selecedSSTarget), AssignmentFrame.SSAssignmentMenu)
 	else
-		UIDropDownMenu_SetText(LA.GetValueFromDropDownList(AssignmentFrame.SSAssignmentMenu, LA.GetSSTargets(), "SSAssignments"), AssignmentFrame.SSAssignmentMenu)
+		UIDropDownMenu_SetText("None", AssignmentFrame.SSAssignmentMenu)
 	end
 
 	--Update the Portrait picture	
@@ -369,7 +369,12 @@ function LA.GetWarlockFromAssignmentFrame(WarlockName)
     local Warlock = LA.CreateWarlock(AssignmentFrame.WarlockName,
 	LA.GetCurseValueFromDropDownList(AssignmentFrame.CurseAssignmentMenu),
 	LA.GetValueFromDropDownList(AssignmentFrame.BanishAssignmentMenu, LA.BanishMarkers, ""))
-    Warlock.SSAssignment = LA.GetValueFromDropDownList(AssignmentFrame.SSAssignmentMenu, LA.GetSSTargets(), "SSAssignments")
+	local ssAssignment = LA.GetSSValueFromDropDownList(AssignmentFrame.SSAssignmentMenu)
+	if ssAssignment == nil then
+		Warlock.SSAssignment = LA.EmptySSTarget
+	else
+		Warlock.SSAssignment = ssAssignment
+	end
     Warlock.AssignmentFrameLocation = AssignmentFrame.LockFrameID
     return Warlock   
 end
@@ -415,19 +420,19 @@ function LA.AnnounceAssignments()
 	local AnnounceOption = 	LA.GetValueFromDropDownList(LockAssignmentAnnouncerOptionMenu, LA.AnnouncerOptions, "");
 	for k, v in pairs(LA.LockAssignmentsData) do
 		local message = ""
-		if v.CurseAssignme1nt ~= "None"  or v.BanishAssignment ~= "None" or v.SSAssignment~="None" then
+		if v.CurseAssignme1nt ~= "None"  or v.BanishAssignment ~= "None" or v.SSAssignment.Name ~= "None" then
 			message = v.Name .. ": ";
 		end
-		if v.CurseAssignment~="None" then
+		if v.CurseAssignment ~= "None" then
 			message = message.."Curse -> ".. v.CurseAssignment .." ";
 			LA.SendAnnounceMent(AnnounceOption, message, v);
 		end
-		if v.BanishAssignment~="None" then
+		if v.BanishAssignment ~= "None" then
 			message = v.Name .. ": ".."Banish -> {".. v.BanishAssignment .."} ";
 			LA.SendAnnounceMent(AnnounceOption, message, v);
 		end
-		if v.SSAssignment~="None" then
-			message = v.Name .. ": ".."SS -> "..v.SSAssignment .." ";
+		if v.SSAssignment.Name ~= "None" then
+			message = v.Name .. ": ".."SS -> "..LA.GetColoredName(v.SSAssignment) .." ";
 			LA.SendAnnounceMent(AnnounceOption, message, v);
 		end		
 	end		

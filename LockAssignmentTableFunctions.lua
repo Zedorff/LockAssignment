@@ -147,4 +147,26 @@ do
 		end
 		return getN
 	end
+
+	function LA.printTable(tbl, indent)
+		indent = indent or 0  -- Set default indent level
+		local spacing = string.rep("  ", indent)  -- Create indentation based on level
+		
+		if type(tbl) ~= "table" then
+			LA.print(spacing .. tostring(tbl))  -- Print non-table values
+			return
+		end
+		
+		for k, v in pairs(tbl) do
+			local key = type(k) == "string" and string.format("%q", k) or tostring(k)  -- Format key as a string if necessary
+			LA.print(spacing .. "[" .. key .. "] = ")  -- Print the key
+			
+			if type(v) == "table" then
+				LA.print("")  -- Print a new line before the nested table
+				LA.printTable(v, indent + 1)  -- Recursively print nested tables
+			else
+				LA.print(tostring(v))  -- Print non-table values
+			end
+		end
+	end
 end

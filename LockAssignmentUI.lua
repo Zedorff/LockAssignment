@@ -318,6 +318,10 @@ function LA.GetBanishValueFromDropDownList(DropDownMenu)
 	return LA.BanishMarkers[selectedValue]
 end
 
+function LA.GetSSValueFromDropDownList(DropDownMenu)
+	return UIDropDownMenu_GetSelectedValue(DropDownMenu)
+end
+
 -- Returns the value of the selected option in a drop down menu.
 -- This exists because the built in UIDropDownMenu_GetSelectedValue appears to be broken.
 -- Of course, it is probable that I am using the drop down menu incorrectly in this case.
@@ -554,14 +558,14 @@ function LA.CreateSoulstoneDropDownMenu(ParentFrame, OptionList, DropDownType)
     dropdowncount = dropdowncount + 1
     local NewDropDownMenu = CreateFrame("Frame", "NL_DropDown0"..dropdowncount, ParentFrame, "UIDropDownMenuTemplate")
 
-    local function OnClick(_)
-		UIDropDownMenu_SetSelectedID(NewDropDownMenu, this:GetID())
-
-		local selection = LA.GetValueFromDropDownList(NewDropDownMenu, OptionList, DropDownType)
+    local function OnClick(self)
+        UIDropDownMenu_SetSelectedID(DropDownMenu, this:GetID())
+		UIDropDownMenu_SetSelectedValue(DropDownMenu, this.value)
+    
+		local selection = LA.GetColoredName(LA.GetSSValueFromDropDownList(DropDownMenu))
 		if LA.DebugMode then
 			LA.print("User changed selection to " .. selection)
 		end
-        LA.UpdateDropDownSideGraphic(NewDropDownMenu, selection, DropDownType)
 		CloseDropDownMenus()
     end
 
@@ -570,7 +574,7 @@ function LA.CreateSoulstoneDropDownMenu(ParentFrame, OptionList, DropDownType)
 	function initialize(level)
 		level = level or 1;
 		if (level == 1) then
-			for key, subarray in classMap do
+			for key, _ in classMap do
 				local info = {};
 				info.hasArrow = true;
 				info.notCheckable = true;
@@ -585,16 +589,13 @@ function LA.CreateSoulstoneDropDownMenu(ParentFrame, OptionList, DropDownType)
 		if (level == 2) then
 			local Level1_Key = UIDROPDOWNMENU_MENU_VALUE["Level1_Key"];
 			local subarray = classMap[Level1_Key];
-			for key, subsubarray in subarray do
+			for _, subsubarray in subarray do
 				local info = {};
 				info.hasArrow = false;
 				info.notCheckable = false;
-				info.text = subsubarray;
+				info.text = LA.GetColoredName(subsubarray);
 				info.func = OnClick
-				info.value = {
-					["Level1_Key"] = Level1_Key,
-					["Sublevel_Key"] = key,
-				};
+				info.value = subsubarray;
 				UIDropDownMenu_AddButton(info, level);
 			end
 		end
@@ -615,26 +616,30 @@ function BuildClassMap(array)
             result[v.Class] = {};
         end
 
+		local player = {}
 		if v.Color ~= nil then
-			table.insert(result[v.Class], "|c" .. v.Color .. v.Name);
+			player.Name = v.Name
+			player.Color = v.Color
 		else
-			table.insert(result[v.Class], v.Name);
+			player.Name = v.Name
 		end
+
+		table.insert(result[v.Class], player);
         
     end
 
    return result;
 end
 
-function LA.UpdateSoulstoneDropDownMenuWithNewOptions(DropDownMenu, OptionList, DropDownType)
-	local function OnClick(_)
+function LA.UpdateSoulstoneDropDownMenuWithNewOptions(DropDownMenu, OptionList, Warlock)
+	local function OnClick(self)
         UIDropDownMenu_SetSelectedID(DropDownMenu, this:GetID())
+		UIDropDownMenu_SetSelectedValue(DropDownMenu, this.value)
     
-		local selection = LA.GetValueFromDropDownList(DropDownMenu, OptionList, DropDownType)
+		local selection = LA.GetColoredName(LA.GetSSValueFromDropDownList(DropDownMenu))
 		if LA.DebugMode then
 			LA.print("User changed selection to " .. selection)
 		end
-        LA.UpdateDropDownSideGraphic(DropDownMenu, selection, DropDownType)
 		CloseDropDownMenus()
     end
 
@@ -643,7 +648,7 @@ function LA.UpdateSoulstoneDropDownMenuWithNewOptions(DropDownMenu, OptionList, 
 	function initialize(level)
 		level = level or 1;
 		if (level == 1) then
-			for key, subarray in classMap do
+			for key, _ in classMap do
 				local info = {};
 				info.hasArrow = true;
 				info.notCheckable = false;
@@ -659,19 +664,19 @@ function LA.UpdateSoulstoneDropDownMenuWithNewOptions(DropDownMenu, OptionList, 
 		if (level == 2) then
 			local Level1_Key = UIDROPDOWNMENU_MENU_VALUE["Level1_Key"];
 			local subarray = classMap[Level1_Key];
-			for key, subsubarray in subarray do
+			for _, subsubarray in subarray do
 				local info = {};
 				info.hasArrow = false;
 				info.notCheckable = false;
-				info.text = subsubarray;
+				info.text = LA.GetColoredName(subsubarray);
 				info.func = OnClick
-				info.value = {
-					["Level1_Key"] = Level1_Key,
-					["Sublevel_Key"] = key,
-				};
+				info.value = subsubarray;
 				UIDropDownMenu_AddButton(info, level);
 			end
 		end
+
+		UIDropDownMenu_SetSelectedValue(DropDownMenu, Warlock.SSAssignment)
+
 	end
 	
 	UIDropDownMenu_Initialize(DropDownMenu, initialize)
@@ -806,7 +811,7 @@ function LA.LockAssignmentAssignRejectClick()
 end
 
 function LA.UpdateSoulStoneAssignment(Assignment)
-	LockAssignmentAssignCheckFrame.SoulStoneAssignment:SetText(Assignment);
+	LockAssignmentAssignCheckFrame.SoulStoneAssignment:SetText(LA.GetColoredName(Assignment));
 end
 
 
@@ -870,8 +875,8 @@ function LA.InitPersonalMonitorFrame()
 end
 
 function LA.UpdatePersonalSSAssignment(ParentFrame, SSAssignment)
-	if SSAssignment ~= "None" then
-		ParentFrame.SSAssignmentText:SetText(SSAssignment);
+	if SSAssignment.Name ~= "None" then
+		ParentFrame.SSAssignmentText:SetText(LA.GetColoredName(SSAssignment));
 		else
 			ParentFrame.SSAssignmentText:SetText("");
 	end
@@ -883,8 +888,8 @@ function LA.UpdatePersonalMonitorFrame()
 	LA.UpdateCurseGraphic(AssignmentPersonalMonitorFrame, myData.CurseAssignment);
 	LA.UpdatePersonalSSAssignment(AssignmentPersonalMonitorFrame, myData.SSAssignment);
 	AssignmentPersonalMonitorFrame:SetScript("OnClick", function(_)
-		if myData.SSAssignment ~= "None" then
-			TargetByName(tostring(myData.SSAssignment));
+		if myData.SSAssignment.Name ~= "None" then
+			TargetByName(tostring(myData.SSAssignment.Name));
 		end
 	end)
 
@@ -913,8 +918,8 @@ function LA.UpdatePersonalMonitorFrame()
 		AssignmentPersonalMonitorFrame.SSAssignmentText:SetPoint("LEFT", AssignmentPersonalMonitorFrame, "LEFT", 2, 0)
 	end
 
-	LA.HaveSSAssignment = myData.SSAssignment ~= "None"
-	if myData.CurseAssignment ~= "None" or myData.BanishAssignment ~= "None" or myData.SSAssignment ~= "None" then
+	LA.HaveSSAssignment = myData.SSAssignment.Name ~= "None"
+	if myData.CurseAssignment ~= "None" or myData.BanishAssignment ~= "None" or myData.SSAssignment.Name ~= "None" then
 		AssignmentPersonalMonitorFrame:Show()
 	else
 		AssignmentPersonalMonitorFrame:Hide()
@@ -931,7 +936,7 @@ function LA.UpdatePersonalMonitorSize(myData)
 		buffcount = buffcount+1;
 	end
 	local textLength = 0
-	if myData.SSAssignment ~="None" then
+	if myData.SSAssignment.Name ~="None" then
 		textLength = 75;
 	end
 	AssignmentPersonalMonitorFrame:SetWidth((picframesize*buffcount)+textLength)

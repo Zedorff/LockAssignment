@@ -110,7 +110,9 @@ function LockAssignment:OnCommReceived(prefix, message, distribution, sender)
                         if LA.IsMyDataDirty(assignmentData) or LA.DebugMode then
                             LA.SetLockAssignmentCheckFrame(assignmentData.CurseAssignment, assignmentData.BanishAssignment, assignmentData.SSAssignment)
                         else
-                            LA.print("updating curse macro.")
+                            if LA.DebugMode then
+                                LA.print("updating curse macro.")
+                            end
                             LockAssignmentAssignCheckFrame.activeCurse = assignmentData.CurseAssignment;
                             LA.SetupAssignmentMacro(LockAssignmentAssignCheckFrame.activeCurse);
                             LA.SendAssignmentAcknowledgement("true");
@@ -118,8 +120,8 @@ function LockAssignment:OnCommReceived(prefix, message, distribution, sender)
                     end
                 end
 
-                LA.HaveSSAssignment = myData.SSAssignment ~= "None"
-                if myData.CurseAssignment == "None" and myData.BanishAssignment == "None" and myData.SSAssignment == "None" then
+                LA.HaveSSAssignment = myData.SSAssignment.Name ~= "None"
+                if myData.CurseAssignment == "None" and myData.BanishAssignment == "None" and myData.SSAssignment.Name == "None" then
                     AssignmentPersonalMonitorFrame:Hide();
                 else
                     AssignmentPersonalMonitorFrame:Show();
