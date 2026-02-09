@@ -16,6 +16,37 @@ function LA.LockAssignmentInit()
 		})
 		LA.InitLockAssignmentFrameScrollArea()
 		LA.RegisterForComms()
+		LA.OnAssignmentsOrVersionChanged = function(eventType, payload)
+			if eventType == "VersionOutOfDate" then
+				LockAssignmentFrame.WarningTextFrame:Show()
+				LACommit_Button:Disable()
+			elseif eventType == "BroadcastMerged" then
+				LA.UpdateAllWarlockFrames()
+				local myRow = LA.GetMyAssignment()
+				if myRow then
+					local a = myRow.assignment
+					LA.HaveSSAssignment = a.SSAssignment and a.SSAssignment.Name ~= "None"
+					if a.CurseAssignment == "None" and a.BanishAssignment == "None" and (not a.SSAssignment or a.SSAssignment.Name == "None") then
+						AssignmentPersonalMonitorFrame:Hide()
+					else
+						LA.UpdatePersonalMonitorFrame()
+						AssignmentPersonalMonitorFrame:Show()
+					end
+				end
+			elseif eventType == "MyAssignmentReceived" and payload then
+				if LA.HasMyAssignmentChanged(payload) or LA.DebugMode then
+					LA.SetLockAssignmentCheckFrame(payload.CurseAssignment, payload.BanishAssignment, payload.SSAssignment)
+				else
+					LockAssignmentAssignCheckFrame.activeCurse = payload.CurseAssignment
+					LA.SetupAssignmentMacro(LockAssignmentAssignCheckFrame.activeCurse)
+					LA.SendAssignmentAcknowledgement("true")
+				end
+			elseif eventType == "AckReceived" and payload then
+				LA.RefreshAssignmentFrame(payload, LA.GetAssignmentFrameById(payload.assignment.AssignmentFrameLocation))
+			elseif eventType == "AssignmentReset" then
+				LA.UpdateAllWarlockFrames()
+			end
+		end
 		LockAssignmentFrame_HasInitialized = true
 		LA.UpdateAllWarlockFrames();
 		LA.InitLockAssignmentCheckFrame();
@@ -29,6 +60,10 @@ end
 function LA.OnEvent()
 	if event == "RAID_ROSTER_UPDATE" then
 		LA.RosterUpdate()
+		LA.LockAssignmentsData = LA.SyncRosterWithAssignments(LA.LockAssignmentsData)
+		LA.UpdateAllWarlockFrames()
+		LA.UpdatePersonalMonitorFrame()
+		LA.RefreshPersonalPortrait()
 	elseif event == "ADDON_LOADED" then
 		LA.InitPersonalMonitorFrame();
 	end
@@ -90,47 +125,19 @@ function LockAssignmentPersonalFrame_OnUpdate(self, elapsed)
 end
 
 function LA.InitLockAssignmentData()
-	if(LA.RaidMode) then
+	if LA.RaidMode then
 		if LA.DebugMode then
 			LA.print("Initializing Warlock Data")
 		end
-		return LA.RegisterWarlocks()
+		return LA.BuildRosterFromRaid()
 	else
 		return LA.LockAssignmentsData
 	end
 end
 
-function  LA.GetAssignmentIndexByName(table, name)
-
-	for key, value in pairs(table) do
-		--LA.print(key, " -- ", value["LockFrameID"])
-		--LA.print(value.Name)
-		if value.Name == name then
-			if LA.DebugMode then
-				LA.print(value.Name, "is in position", key)
-			end
-			return key
-		end
-	end
-	if LA.DebugMode then
-		LA.print(name, "is not in the list.")
-	end
-	return nil
-end
-
-function LA.RegisterMySoloData()
-	local _, englishClass, _ = UnitClass("player");
-
-	local soloData = {}
-	if englishClass == "WARLOCK" then
-		table.insert(soloData, LA.CreateWarlock(UnitName("player"), "None", "None"));
-	end
-	return soloData
-end
-
 --This is wired to a button click at present.
 function LA.LockAssignment_HideFrame()
-	if LA.IsUIDirty(LA.LockAssignmentsData) then
+	if LA.HasUnsavedAssignmentChanges(LA.LockAssignmentsData) then
 		LA.print("Changes were not saved.")
 		--PlaySound(SOUNDKIT.IG_MAINMENU_CLOSE)
 		LockAssignmentFrame:Hide()
@@ -144,7 +151,7 @@ function LA.LockAssignment_Commit()
 	if LA.FindMyRaidRank() < 1 then
 		LACommit_Button:Disable();
 	else
-		LA.LockAssignmentsData = LA.CommitChanges(LA.LockAssignmentsData)
+		LA.LockAssignmentsData = LA.CommitUiToAssignments(LA.LockAssignmentsData)
 		LA.UpdateAllWarlockFrames();
 		LA.SendAssignmentReset();
 		LA.BroadcastTable(LA.LockAssignmentsData)
@@ -189,19 +196,22 @@ function LA.LockAssignment_OnShowFrame()
 	--PlaySound(SOUNDKIT.IG_MAINMENU_OPEN)
 	--LA.print("Updating SS targets")
 	LA.UpdateSSTargets()
-	LA.LockAssignmentsData = LA.UpdateWarlocks(LA.LockAssignmentsData);
+	LA.LockAssignmentsData = LA.SyncRosterWithAssignments(LA.LockAssignmentsData);
 	LA.UpdateAllWarlockFrames();
+	LA.UpdatePersonalMonitorFrame()
 	LA.RequestAssignments()
 	if LA.DebugMode then
 		LA.print("Found " .. LA.GetTableLength(LA.LockAssignmentsData) .. " Warlocks in raid." );
 	end	
 	if LA.GetTableLength(LA.LockAssignmentsData) == 0 then
 		LA.RaidMode = false;
-		LA.LockAssignmentsData = LA.RegisterMySoloData();
+		LA.LockAssignmentsData = LA.BuildSoloRoster();
 	end
 	LA.SetExtraChats();
 	if LA.FindMyRaidRank() >= 1 then
-		LACommit_Button:Enable();
+		LACommit_Button:Enable()
+	else
+		LACommit_Button:Disable()
 	end
 end
 
