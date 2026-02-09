@@ -1,3 +1,7 @@
-# LockAssignment
-UI addon for vanila WoW (1.12) to allow users to assign curses, banish responsibilities, and soul stone recipients for 40 man raids.
-This is a modified version of [NeverLocky](https://github.com/JohnImboden/NeverLocky) that was ported to WoW 1.12 with additional features and changes.
+## LockAssignment
+
+**LockAssignment** is a raid utility addon for **World of Warcraft Vanilla (1.12)** that helps manage warlock responsibilities in 40-man raids.
+
+It provides a centralized way to assign **curses**, **banish targets**, and **soulstone recipients**, reducing coordination overhead during raids.
+
+Inspired by the original [NeverLocky](https://github.com/JohnImboden/NeverLocky).
