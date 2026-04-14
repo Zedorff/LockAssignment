@@ -31,6 +31,24 @@ function LA.GetClassColor(class)
 	return RAID_CLASS_COLORS[class]
 end
 
+function LA.GetClassColorStr(color)
+	if not color then
+		return "ffffffff"
+	end
+	if color.colorStr then
+		return color.colorStr
+	end
+	if color.r and color.g and color.b then
+		return string.format(
+			"ff%02x%02x%02x",
+			math.floor(color.r * 255 + 0.5),
+			math.floor(color.g * 255 + 0.5),
+			math.floor(color.b * 255 + 0.5)
+		)
+	end
+	return "ffffffff"
+end
+
 function LA.FirstToUpper(str)
 	return (string.gsub(str, "^%l", string.upper))
 end
@@ -48,11 +66,11 @@ function LA.GetSSTargetsFromRaid()
 		for i = 1, 40 do
 			local name, _, _, _, _, class, _, _, _, _, _ = GetRaidRosterInfo(i)
 			if not (name == nil) then
-				local color = LA.GetClassColor(class)
+				local colorStr = LA.GetClassColorStr(LA.GetClassColor(class))
 				local ssWithColor = {}
 				ssWithColor.Name = name
-				ssWithColor.Color = color.colorStr
-				ssWithColor.Class = "|c" .. color.colorStr .. LA.FirstToUpper(string.lower(class))
+				ssWithColor.Color = colorStr
+				ssWithColor.Class = "|c" .. colorStr .. LA.FirstToUpper(string.lower(class))
 				table.insert(results, ssWithColor)
 			end
 		end
